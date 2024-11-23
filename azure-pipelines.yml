@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  azureSubscription: 'punitdarira'
+  #azureSubscription: 'punitdarira'
   sqlDatabaseName: 'first_db'
   sqlAdminUsername: 'root_db'
   sqlAdminPassword: '$(sqlAdminPassword)' # Securely stored in Azure DevOps pipeline secrets
@@ -17,7 +17,7 @@ stages:
     steps:
     - task: SqlAzureDacpacDeployment@1
       inputs:
-        azureSubscription: '$(azureSubscription)'
+        #azureSubscription: '$(azureSubscription)'
         ServerName: database-automation.mysql.database.azure.com
         DatabaseName: '$(sqlDatabaseName)'
         SqlUsername: '$(sqlAdminUsername)'
@@ -27,7 +27,7 @@ stages:
 
     - task: SqlAzureDacpacDeployment@1
       inputs:
-        azureSubscription: '$(azureSubscription)'
+        #azureSubscription: '$(azureSubscription)'
         ServerName: '$(sqlServerName).database.windows.net'
         DatabaseName: '$(sqlDatabaseName)'
         SqlUsername: '$(sqlAdminUsername)'
