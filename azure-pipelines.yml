@@ -27,8 +27,8 @@ steps:
     conn = mysql.connector.connect(
         host='${{variables.AZURE_SQL_CONNECTION_STRING}}',
         user='${{variables.SQL_USERNAME}}',
-        '${{variables.SQL_PASSWORD}}',
-        '${{variables.SQL_DATABASE}}'
+        password='${{variables.SQL_PASSWORD}}',
+        database='${{variables.AZURE_SQL_CONNECTION_STRING}}'
     );
     cursor = conn.cursor();
     with open('create_table.sql', 'r') as file:
@@ -43,8 +43,8 @@ steps:
     conn = mysql.connector.connect(
         host='${{variables.AZURE_SQL_CONNECTION_STRING}}',
         user='${{variables.SQL_USERNAME}}',
-        '${{variables.SQL_PASSWORD}}',
-        '${{variables.SQL_DATABASE}}'
+        password='${{variables.SQL_PASSWORD}}',
+        database='${{variables.AZURE_SQL_CONNECTION_STRING}}'
     );
     cursor = conn.cursor();
     with open('update_table.sql', 'r') as file:
