@@ -1,0 +1,41 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'YourAzureSubscription'
+  sqlServerName: 'your-sql-server-name'
+  sqlDatabaseName: 'your-database-name'
+  sqlAdminUsername: 'your-admin-username'
+  sqlAdminPassword: '$(sqlAdminPassword)' # Securely stored in Azure DevOps pipeline secrets
+
+stages:
+- stage: Deploy
+  jobs:
+  - job: DeployDatabase
+    steps:
+    - task: SqlAzureDacpacDeployment@1
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        ServerName: '$(sqlServerName).database.windows.net'
+        DatabaseName: '$(sqlDatabaseName)'
+        SqlUsername: '$(sqlAdminUsername)'
+        SqlPassword: '$(sqlAdminPassword)'
+        deployType: 'SqlTask'
+        SqlFile: '$(System.DefaultWorkingDirectory)/create_table.sql'
+
+    - task: SqlAzureDacpacDeployment@1
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        ServerName: '$(sqlServerName).database.windows.net'
+        DatabaseName: '$(sqlDatabaseName)'
+        SqlUsername: '$(sqlAdminUsername)'
+        SqlPassword: '$(sqlAdminPassword)'
+        deployType: 'SqlTask'
+        SqlFile: '$(System.DefaultWorkingDirectory)/update_table.sql'
+
+    - script: |
+        sqlcmd -S tcp:$(sqlServerName).database.windows.net,1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -Q "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'YourTableName' AND COLUMN_NAME = 'NewColumnName') PRINT 'Column exists' ELSE PRINT 'Column does not exist'"
+      displayName: 'Validate Schema Update'
