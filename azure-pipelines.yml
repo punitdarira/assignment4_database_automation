@@ -28,7 +28,7 @@ steps:
         host='${{variables.AZURE_SQL_CONNECTION_STRING}}',
         user='${{variables.SQL_USERNAME}}',
         '${{variables.SQL_PASSWORD}}',
-        '${{variables.SQL_DATABASE}}',
+        '${{variables.SQL_DATABASE}}'
     );
     cursor = conn.cursor();
     with open('create_table.sql', 'r') as file:
@@ -44,7 +44,7 @@ steps:
         host='${{variables.AZURE_SQL_CONNECTION_STRING}}',
         user='${{variables.SQL_USERNAME}}',
         '${{variables.SQL_PASSWORD}}',
-        '${{variables.SQL_DATABASE}}',
+        '${{variables.SQL_DATABASE}}'
     );
     cursor = conn.cursor();
     with open('update_table.sql', 'r') as file:
