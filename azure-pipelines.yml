@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-24.04'
 
 variables:
-  azureSubscription: 'pipelineconnection'
+  #azureSubscription: 'pipelineconnection'
   sqlServerName: 'database-automation.mysql.database.azure.com'
   sqlDatabaseName: 'first_db'
   sqlAdminUsername: 'root_db'
@@ -18,7 +18,7 @@ stages:
     steps:
     - task: AzureCLI@2
       inputs:
-        azureSubscription: '$(azureSubscription)'
+        #azureSubscription: '$(azureSubscription)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -27,7 +27,7 @@ stages:
 
     - task: AzureCLI@2
       inputs:
-        azureSubscription: '$(azureSubscription)'
+        #azureSubscription: '$(azureSubscription)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
