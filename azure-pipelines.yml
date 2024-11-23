@@ -2,10 +2,11 @@ trigger:
 - main
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-24.04'
 
 variables:
-  #azureSubscription: 'punitdarira'
+  azureSubscription: 'punitdarira'
+  sqlServerName: 'database-automation.mysql.database.azure.com'
   sqlDatabaseName: 'first_db'
   sqlAdminUsername: 'root_db'
   sqlAdminPassword: '$(sqlAdminPassword)' # Securely stored in Azure DevOps pipeline secrets
@@ -15,26 +16,24 @@ stages:
   jobs:
   - job: DeployDatabase
     steps:
-    - task: SqlAzureDacpacDeployment@1
+    - task: AzureCLI@2
       inputs:
-        #azureSubscription: '$(azureSubscription)'
-        ServerName: database-automation.mysql.database.azure.com
-        DatabaseName: '$(sqlDatabaseName)'
-        SqlUsername: '$(sqlAdminUsername)'
-        SqlPassword: '$(sqlAdminPassword)'
-        deployType: 'SqlTask'
-        SqlFile: '$(System.DefaultWorkingDirectory)/create_table.sql'
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az sql db connect --server $(sqlServerName) --database $(sqlDatabaseName) --user $(sqlAdminUsername) --password $(sqlAdminPassword)
+          sqlcmd -S tcp:$(sqlServerName),1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -i $(System.DefaultWorkingDirectory)/create_table.sql
 
-    - task: SqlAzureDacpacDeployment@1
+    - task: AzureCLI@2
       inputs:
-        #azureSubscription: '$(azureSubscription)'
-        ServerName: '$(sqlServerName).database.windows.net'
-        DatabaseName: '$(sqlDatabaseName)'
-        SqlUsername: '$(sqlAdminUsername)'
-        SqlPassword: '$(sqlAdminPassword)'
-        deployType: 'SqlTask'
-        SqlFile: '$(System.DefaultWorkingDirectory)/update_table.sql'
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az sql db connect --server $(sqlServerName) --database $(sqlDatabaseName) --user $(sqlAdminUsername) --password $(sqlAdminPassword)
+          sqlcmd -S tcp:$(sqlServerName),1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -i $(System.DefaultWorkingDirectory)/update_table.sql
 
     - script: |
-        sqlcmd -S tcp:$(sqlServerName).database.windows.net,1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -Q "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'assignment4' AND COLUMN_NAME = 'newcolumn') PRINT 'Column exists' ELSE PRINT 'Column does not exist'"
+        sqlcmd -S tcp:$(sqlServerName),1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -Q "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'assignment4' AND COLUMN_NAME = 'newcolumn') PRINT 'Column exists' ELSE PRINT 'Column does not exist'"
       displayName: 'Validate Schema Update'
