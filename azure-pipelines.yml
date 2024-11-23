@@ -1,39 +1,74 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'ubuntu-24.04'
+  vmImage: 'ubuntu-latest'
 
 variables:
-  azureSubscription: 'Azure for Students'
-  sqlServerName: 'database-automation.mysql.database.azure.com'
-  sqlDatabaseName: 'first_db'
-  sqlAdminUsername: 'root_db'
-  sqlAdminPassword: '$(sqlAdminPassword)' # Securely stored in Azure DevOps pipeline secrets
+  AZURE_SQL_CONNECTION_STRING: 'database-automation.mysql.database.azure.com'
+  SQL_USERNAME: 'root_db'
+  SQL_PASSWORD: '$(sqlAdminPassword)' 
+  SQL_DATABASE: 'first_db'
 
-stages:
-- stage: Deploy
-  jobs:
-  - job: DeployDatabase
-    steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az sql db connect --server $(sqlServerName) --database $(sqlDatabaseName) --user $(sqlAdminUsername) --password $(sqlAdminPassword)
-          sqlcmd -S tcp:$(sqlServerName),1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -i $(System.DefaultWorkingDirectory)/create_table.sql
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
 
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az sql db connect --server $(sqlServerName) --database $(sqlDatabaseName) --user $(sqlAdminUsername) --password $(sqlAdminPassword)
-          sqlcmd -S tcp:$(sqlServerName),1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -i $(System.DefaultWorkingDirectory)/update_table.sql
+- script: |
+    pip install mysql-connector-python
+  displayName: 'Install MySQL Connector'
 
-    - script: |
-        sqlcmd -S tcp:$(sqlServerName),1433 -d $(sqlDatabaseName) -U $(sqlAdminUsername) -P $(sqlAdminPassword) -Q "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'assignment4' AND COLUMN_NAME = 'newcolumn') PRINT 'Column exists' ELSE PRINT 'Column does not exist'"
-      displayName: 'Validate Schema Update'
+- script: |
+    python -c "
+    import mysql.connector;
+    conn = mysql.connector.connect(
+        host='$(AZURE_SQL_CONNECTION_STRING)',
+        user='$(SQL_USERNAME)',
+        password='$(SQL_PASSWORD)',
+        database='$(SQL_DATABASE)'
+    );
+    cursor = conn.cursor();
+    with open('create_table.sql', 'r') as file:
+        cursor.execute(file.read());
+    conn.close();
+    "
+  displayName: 'Run create_table.sql'
+
+- script: |
+    python -c "
+    import mysql.connector;
+    conn = mysql.connector.connect(
+        host='$(AZURE_SQL_CONNECTION_STRING)',
+        user='$(SQL_USERNAME)',
+        password='$(SQL_PASSWORD)',
+        database='$(SQL_DATABASE)'
+    );
+    cursor = conn.cursor();
+    with open('update_table.sql', 'r') as file:
+        cursor.execute(file.read());
+    conn.close();
+    "
+  displayName: 'Run update_table.sql'
+
+- script: |
+    python -c "
+    import mysql.connector;
+    conn = mysql.connector.connect(
+        host='$(AZURE_SQL_CONNECTION_STRING)',
+        user='$(SQL_USERNAME)',
+        password='$(SQL_PASSWORD)',
+        database='$(SQL_DATABASE)'
+    );
+    cursor = conn.cursor();
+    cursor.execute(\"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'assignment4' AND COLUMN_NAME = 'newcolumn';\");
+    result = cursor.fetchone();
+    if result:
+        print('Column exists: Validation successful.');
+    else:
+        raise Exception('Validation failed: Column does not exist.');
+    conn.close();
+    "
+  displayName: 'Validate schema update'
