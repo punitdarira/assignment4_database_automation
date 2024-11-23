@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-24.04'
 
 variables:
-  azureSubscription: 'Azure for Students'
+  azureSubscription: 'pipelineconnection'
   sqlServerName: 'database-automation.mysql.database.azure.com'
   sqlDatabaseName: 'first_db'
   sqlAdminUsername: 'root_db'
